@@ -9,7 +9,8 @@ class ProductController:
         self.products = self.database.load_data()
     
     def create_products(self):
-        product_data = self.product_views.get_products_data()
+        existing_ids = [product.id for product in self.products]
+        product_data = self.product_views.get_products_data(existing_ids)
         new_products = Product(**product_data)
         self.products.append(new_products)
         self.database.save_data(self.products)
@@ -29,7 +30,8 @@ class ProductController:
     
         if product:
             update_data = self.product_views.get_update_products_data(product)
-            product.update(**update_data)
+            for key, value in update_data.items():
+                setattr(product,key, value) # cargamos los datos antes, para ver si soluciono el problema
             self.database.save_data(self.products)
             self.product_views.display_message("Product updated successfully.")
         else:
@@ -49,7 +51,7 @@ class ProductController:
     
     def find_product_by_id(self, product_id):
         for product in self.products:
-            if product.id == product_id:
+            if str(product.id) == str(product_id):
                 return product
         return None
 
@@ -66,8 +68,9 @@ class ProductController:
             elif option == 4:
                 self.delete_product()
             elif option == 5:
-                self.product_views.display_menu("Exiting the program. GoodBye!") 
+                self.product_views.display_menu("Exiting the program. Goodbye! see you later!") 
                 break
             else:
                 self.product_views.display_message("Invalid option, Please Try again.")
+                
                 
