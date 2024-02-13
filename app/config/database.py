@@ -6,14 +6,17 @@ class Database:
         self.filename = filename
     
     def save_data(self, products):
-        with open(self.filename, "w", newline="") as csvfile:
-            fieldnames = ["id","name","description", "price", "stock", "category"]
-            writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
+        try:
+            with open(self.filename, "w", newline="") as csvfile:
+                fieldnames = ["id","name","description", "price", "stock", "category"]
+                writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
+                writer.writeheader()
+                for product in products:
+                    writer.writerow({field: getattr(product, field) for field in fieldnames})
+            print("Data saved successfully")
+        except Exception as e:
+            print("Erro saving data:", e)
 
-            writer.writeheader()
-            for product in products:
-                writer.writerow({field: getattr(product, field) for field in fieldnames})
-    
     def load_data(self):
         data = []
         try:
@@ -21,7 +24,7 @@ class Database:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
                     product_data ={
-                        "product_id": row["id"],
+                        "id": row["id"],
                         "name": row["name"],
                         "description": row["description"],
                         "price": row["price"],
@@ -30,8 +33,10 @@ class Database:
                     }
                     product =Product(**product_data)
                     data.append(product)
+            print("Data loaded successfully.")
         except FileNotFoundError:
-            pass
+            print("File not found.")
+        except Exception as e:
+            print("Erro loading data:", e)
         return data
-    
-    
+        
