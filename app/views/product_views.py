@@ -1,3 +1,4 @@
+
 class ProductViews:
     def __init__(self, product_controller):
         self.product_controller = product_controller
@@ -82,4 +83,3 @@ class ProductViews:
         stock = input("Enter New Stock: ")
         category = input("Enter New Category: ")
         return {"name": name, "description": description, "price": price, "stock": stock, "category": category}
-
