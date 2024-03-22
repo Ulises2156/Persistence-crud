@@ -1,75 +1,46 @@
-import csv
+import sqlite3
 from app.models.product import Product
 
 class Database:
-    def __init__(self, filename="product_data.csv"):
-        self.filename = filename
-    
+    def __init__(self, db_file="product_database.db"):
+        self.conn = sqlite3.connect(db_file)
+        self.create_table()
+
+
+    def create_table(self):
+        c = self.conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS products (
+                    id INTEGER PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    price REAL,
+                    stock INTEGER,
+                    category TEXT
+        ) ''')
+        self.conn.commit()
+
     def save_data(self, products):
-        try:
-            with open(self.filename, "w", newline="") as csvfile:
-                fieldnames = ["id", "name", "description", "price", "stock", "category"]
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-                for product in products:
-                    writer.writerow({field: getattr(product, field) for field in fieldnames})
-            print("Data saved successfully")
-        except Exception as e:
-            print("Error saving data:", e)
+        c = self.conn.cursor()
+        c.execute('DELETE FROM products')
+        data = [(product.id, product.name, product.description, product.price, product.stock, product.category)
+        for product in products]
+        c.executemany('INSERT INTO products VALUES (?, ?, ?, ?, ?, ?)',data)
+        self.conn.commit()
+        print("Data saved successfully")
 
     def load_data(self):
-        data = []
-        try:
-            with open(self.filename, "r", newline="") as csvfile:
-                reader = csv.DictReader(csvfile)
-                for row in reader:
-                    product_data = {
-                        "id": row["id"],
-                        "name": row["name"],
-                        "description": row["description"],
-                        "price": row["price"],
-                        "stock": row["stock"],
-                        "category": row["category"],
-                    }
-                    product = Product(**product_data)
-                    data.append(product)
-            print("Data loaded successfully.")
-        except FileNotFoundError:
-            print("File not found.")
-        except Exception as e:
-            print("Error loading data:", e)
-        return data
-    
-    def load_all(filename="product:data.csv"):
-        products = []
-        try:
-            with open(filename, "r", newline="") as csvfile:
-                reader = csv.DictReader(csvfile)
-                for row in reader:
-                    product = Product(
-                        row["id"],
-                        row["name"],
-                        row["description"],
-                        row["price"],
-                        row["stock"],
-                        row["category"]
-                    )
-                    products.append(product)
-        except FileNotFoundError:
-            pass
+        c = self.conn.cursor()
+        c.execute('SELECT * FROM products')
+        products = [Product(*row) for row in c.fetchall()]
+        print("Data loaded successfully")
         return products
-    
-    def save(self, products, filename="product_data.csv"):
-        with open(filename, "w", newline="") as csvfile:
-            fieldnames = ["id", "name", "description", "price", "stock", "category"]
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for product in products:
-                writer.writerow({field: getattr(product, field) for field in fieldnames})
-            print("Data saved successfully")
-    
+
+
     def delete_product(self, product_id):
-        products = self.load_data()
-        updated_products = [product for product in products if product.id != product_id]
-        self.save_data(updated_products)
+        c = self.conn.cursor()
+        c.execute('DELETE FROM products WHERE id=?', (product_id))
+        self.conn.commit()
         print("Product deleted successfully.")
+
+    def close_connection(self):
+        self.conn.close()
