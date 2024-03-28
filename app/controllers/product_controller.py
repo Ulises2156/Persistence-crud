@@ -11,8 +11,8 @@ class ProductController:
             print("Product with this ID already exists. Please choose another ID. ")
         else:
             new_product = Product(**product_data)
+            new_product.save_to_database(self.database.conn)
             self.products.append(new_product)
-            self.database.save_data(self.products)
             print("Product created succcessfully.")
 
     def read_products(self):
@@ -23,12 +23,14 @@ class ProductController:
         if product:
                 for key, value in update_data.items():
                     setattr(product, key, value)
+                print("Product updated successfully.")
+                product.save_to_database(self.database.conn)
 
     def delete_product(self, product_id):
         product = self.find_product_by_id(product_id)
         if product:
             self.products.remove(product)
-            self.database.save_data(self.products)
+            product.delete_from_database(self.database.conn)
             print("Product deleted successfully.")
         else:
             print("Product not found")
@@ -38,3 +40,4 @@ class ProductController:
             if product.id == product_id:
                 return product
         return None
+
